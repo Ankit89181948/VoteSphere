@@ -29,6 +29,13 @@ app.use(express.json());
 // Connect to MongoDB using environment variable
 const MONGODB_URI = process.env.MONGODB_URI;
 
+// ADD THIS CHECK - Ensure MONGODB_URI is defined
+if (!MONGODB_URI) {
+    console.error("ERROR: MONGODB_URI environment variable is not defined");
+    console.error("Please set MONGODB_URI in your environment variables");
+    process.exit(1); // Exit if no MongoDB URI
+}
+
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -237,6 +244,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
+
 // Start server with environment variable port
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
