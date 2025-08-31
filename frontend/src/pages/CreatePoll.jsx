@@ -43,7 +43,7 @@ const CreatePoll = () => {
     
     try {
       setLoading(true);
-      const res = await axios.post('http://localhost:5000/api/polls', { 
+      const res = await axios.post('https://votesphere-2zhx.onrender.com/api/polls', { 
         question, 
         options, 
         expiresInMinutes: finalExpiresInMinutes

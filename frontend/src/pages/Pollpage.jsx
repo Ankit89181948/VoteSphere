@@ -20,7 +20,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const socket = io('http://localhost:5000');
+const socket = io('https://votesphere-2zhx.onrender.com');
 
 const PollPage = () => {
   const { id } = useParams();
@@ -77,7 +77,7 @@ const PollPage = () => {
     const fetchPoll = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:5000/api/polls/${id}`);
+        const res = await axios.get(`https://votesphere-2zhx.onrender.com/api/polls/${id}`);
         setPoll(res.data);
         setError('');
       } catch (err) {
@@ -112,7 +112,7 @@ const PollPage = () => {
     
     try {
       setError('');
-      await axios.post(`http://localhost:5000/api/polls/${id}/vote`, { 
+      await axios.post(`https://votesphere-2zhx.onrender.com/api/polls/${id}/vote`, { 
         optionIndex: selectedOption 
       });
       
@@ -142,7 +142,7 @@ const PollPage = () => {
 
     try {
       if (action === 'close') {
-        await axios.post(`http://localhost:5000/api/polls/${id}/admin/close`, { adminKey });
+        await axios.post(`https://votesphere-2zhx.onrender.com/api/polls/${id}/admin/close`, { adminKey });
         setError('Poll closed successfully');
       } else if (action === 'extend') {
         if (!extendMinutes || extendMinutes <= 0) {
@@ -150,14 +150,14 @@ const PollPage = () => {
           return;
         }
         
-        await axios.post(`http://localhost:5000/api/polls/${id}/admin/extend`, { 
+        await axios.post(`https://votesphere-2zhx.onrender.com/api/polls/${id}/admin/extend`, { 
           adminKey, 
           extendMinutes: parseInt(extendMinutes)
         });
         setError(`Poll extended by ${extendMinutes} minutes`);
         
         // Refresh poll data
-        const res = await axios.get(`http://localhost:5000/api/polls/${id}`);
+        const res = await axios.get(`https://votesphere-2zhx.onrender.com/api/polls/${id}`);
         setPoll(res.data);
       }
     } catch (err) {
