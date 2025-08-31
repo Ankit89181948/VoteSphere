@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Use environment variable for frontend URL with fallback for local development
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL;
 
 const io = new Server(server, {
     cors: {
