@@ -15,7 +15,8 @@ import {
 } from 'chart.js';
 import { 
   FiClock, FiCopy, FiCheck, FiLock, FiUnlock, FiCalendar, 
-  FiUsers, FiHome, FiSettings, FiChevronDown, FiChevronUp 
+  FiUsers, FiHome, FiSettings, FiChevronDown, FiChevronUp,
+  FiArrowLeft, FiShare2, FiBarChart2
 } from 'react-icons/fi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -35,6 +36,7 @@ const PollPage = () => {
   const [showAdminControls, setShowAdminControls] = useState(false);
   const [copied, setCopied] = useState(false);
   const [extendMinutes, setExtendMinutes] = useState('10');
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   // Check if user has already voted
   useEffect(() => {
@@ -116,6 +118,7 @@ const PollPage = () => {
         optionIndex: selectedOption 
       });
       
+      // Store in localStorage to prevent re-voting
       const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');
       votedPolls[id] = true;
       localStorage.setItem('votedPolls', JSON.stringify(votedPolls));
@@ -131,6 +134,25 @@ const PollPage = () => {
     navigator.clipboard.writeText(id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const sharePoll = async () => {
+    const shareData = {
+      title: poll.question,
+      text: `Vote on this poll: ${poll.question}`,
+      url: window.location.href,
+    };
+    
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        copyPollId();
+        setShowShareOptions(false);
+      }
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
   };
 
   const handleAdminAction = async (action) => {
@@ -155,6 +177,7 @@ const PollPage = () => {
         });
         setError(`Poll extended by ${extendMinutes} minutes`);
         
+        // Refresh poll data
         const res = await axios.get(`https://votesphere-2zhx.onrender.com/api/polls/${id}`);
         setPoll(res.data);
       }
@@ -165,10 +188,10 @@ const PollPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading poll...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading poll data...</p>
         </div>
       </div>
     );
@@ -176,15 +199,15 @@ const PollPage = () => {
 
   if (error && !poll) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
-          <div className="text-red-500 mb-4">{error}</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-6">
+        <div className="bg-gray-800 rounded-3xl shadow-xl p-8 max-w-md text-center border border-gray-700">
+          <div className="text-red-400 mb-6 text-lg">{error}</div>
           <button 
             onClick={() => navigate('/')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 mx-auto"
           >
-            <FiHome className="inline mr-2" />
-            Go Home
+            <FiHome className="w-5 h-5" />
+            Return to Home
           </button>
         </div>
       </div>
@@ -192,11 +215,14 @@ const PollPage = () => {
   }
 
   const optionColors = [
-    'bg-blue-50 hover:bg-blue-100 border-blue-300',
-    'bg-emerald-50 hover:bg-emerald-100 border-emerald-300',
-    'bg-amber-50 hover:bg-amber-100 border-amber-300',
-    'bg-rose-50 hover:bg-rose-100 border-rose-300',
-    'bg-indigo-50 hover:bg-indigo-100 border-indigo-300',
+    'from-blue-600 to-blue-700',
+    'from-emerald-600 to-emerald-700',
+    'from-amber-600 to-amber-700',
+    'from-rose-600 to-rose-700',
+    'from-indigo-600 to-indigo-700',
+    'from-purple-600 to-purple-700',
+    'from-pink-600 to-pink-700',
+    'from-cyan-600 to-cyan-700',
   ];
 
   const chartColors = [
@@ -205,6 +231,9 @@ const PollPage = () => {
     'rgba(245, 158, 11, 0.8)',
     'rgba(244, 63, 94, 0.8)',
     'rgba(99, 102, 241, 0.8)',
+    'rgba(139, 92, 246, 0.8)',
+    'rgba(236, 72, 153, 0.8)',
+    'rgba(6, 182, 212, 0.8)',
   ].slice(0, poll.options.length);
 
   const data = {
@@ -215,196 +244,260 @@ const PollPage = () => {
       label: 'Votes',
       data: poll.votes,
       backgroundColor: chartColors,
-      borderRadius: 6,
+      borderRadius: 8,
+      borderWidth: 0,
     }],
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-slate-800">{poll.question}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header with navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700"
+          >
+            <FiArrowLeft className="w-5 h-5" />
+            Back to Home
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowShareOptions(!showShareOptions)}
+              className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded-xl transition-all duration-300"
+            >
+              <FiShare2 className="w-4 h-4" />
+              Share
+            </button>
+          </div>
+        </div>
+
+        {showShareOptions && (
+          <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <button
+                onClick={copyPollId}
+                className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-xl font-medium transition-all duration-300"
+              >
+                {copied ? <FiCheck className="w-4 h-4" /> : <FiCopy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy Poll ID'}
+              </button>
+              <div className="bg-gray-700 px-4 py-2.5 rounded-xl font-mono text-sm text-gray-200 break-all flex-1">
+                {id}
+              </div>
+            </div>
+            <p className="text-sm text-gray-400 mt-2">
+              Share this ID with others to join your poll
+            </p>
+          </div>
+        )}
+
+        {/* Poll Header Card */}
+        <div className="bg-gray-800 rounded-3xl shadow-xl p-8 mb-8 border border-gray-700">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h1 className="text-3xl font-bold text-white">{poll.question}</h1>
             
             {poll.expiresAt && (
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-sm ${
+              <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium ${
                 timeLeft === 'Expired' || !poll.isActive 
-                  ? 'bg-red-100 text-red-700' 
-                  : 'bg-blue-100 text-blue-700'
+                  ? 'bg-red-500/20 text-red-400' 
+                  : 'bg-cyan-500/20 text-cyan-400'
               }`}>
                 <FiClock className="w-4 h-4" />
                 {timeLeft === 'Expired' || !poll.isActive ? 'Poll Closed' : timeLeft}
               </div>
             )}
           </div>
+
           {!poll.isActive && (
-            <div className="mt-4 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg">
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-5 py-3.5 rounded-xl mb-6">
               This poll is no longer accepting votes.
             </div>
           )}
 
-          {/* Poll ID */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <button
-              onClick={copyPollId}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              {copied ? <FiCheck className="w-4 h-4 text-green-300" /> : <FiCopy className="w-4 h-4" />}
-              {copied ? 'Copied!' : 'Copy Poll ID'}
-            </button>
-            <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-sm text-slate-700 break-all">
-              {id}
-            </div>
+          <div className="flex items-center gap-3 text-gray-400">
+            <FiUsers className="w-5 h-5" />
+            <span>{poll.totalVotes || 0} total votes</span>
           </div>
-          <p className="text-sm text-slate-500 mt-2">Share this ID with others to join your poll</p>
         </div>
 
-        {/* Voting */}
+        {/* Voting Section */}
         {!hasVoted && poll.isActive ? (
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Choose an Option</h2>
-            <div className="space-y-3 mb-6">
+          <div className="bg-gray-800 rounded-3xl shadow-xl p-8 mb-8 border border-gray-700">
+            <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+              <FiBarChart2 className="w-5 h-5 text-cyan-400" />
+              Cast Your Vote
+            </h2>
+            <div className="space-y-4 mb-8">
               {poll.options.map((opt, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedOption(index)}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
+                  className={`w-full text-left p-5 rounded-xl transition-all duration-300 border-2 ${
                     selectedOption === index 
-                      ? 'border-blue-500 ring-2 ring-blue-100 scale-[1.02] shadow-sm' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  } ${optionColors[index % optionColors.length]}`}
+                      ? 'border-cyan-500 ring-2 ring-cyan-500/30 scale-[1.02] bg-gradient-to-r from-cyan-500/10 to-cyan-600/10' 
+                      : 'border-gray-700 hover:border-gray-600 bg-gray-700/50 hover:bg-gray-700'
+                  }`}
                   disabled={!poll.isActive}
                 >
-                  {opt}
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 ${
+                      selectedOption === index 
+                        ? 'border-cyan-500 bg-cyan-500' 
+                        : 'border-gray-500'
+                    }`}>
+                      {selectedOption === index && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <span className="text-gray-200 text-lg">{opt}</span>
+                  </div>
                 </button>
               ))}
             </div>
+            
             <button
               onClick={handleVote}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               disabled={selectedOption === null || !poll.isActive}
             >
               Submit Vote
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-slate-200">
-            <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-lg font-medium mb-4 ${
-              hasVoted ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'
+          <div className="bg-gray-800 rounded-3xl shadow-xl p-8 mb-8 border border-gray-700 text-center">
+            <div className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl text-lg font-medium mb-6 ${
+              hasVoted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-700 text-gray-400'
             }`}>
               {hasVoted ? (
                 <>
-                  <FiCheck className="w-5 h-5" />
+                  <FiCheck className="w-6 h-6" />
                   Thank you for voting!
                 </>
               ) : (
                 <>
-                  <FiLock className="w-5 h-5" />
+                  <FiLock className="w-6 h-6" />
                   Voting has ended
                 </>
               )}
             </div>
             {poll.totalVotes > 0 && (
-              <p className="text-slate-600">
-                <FiUsers className="inline mr-1 w-4 h-4" />
+              <p className="text-gray-400 flex items-center justify-center gap-2">
+                <FiUsers className="w-5 h-5" />
                 Total votes: {poll.totalVotes}
               </p>
             )}
           </div>
         )}
 
-        {/* Results */}
+        {/* Results Section */}
         {poll.totalVotes > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-            <div className="flex items-center gap-2 mb-6">
-              <FiUsers className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-semibold text-slate-800">Results</h2>
-              <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm ml-auto">
-                {poll.totalVotes} votes
+          <div className="bg-gray-800 rounded-3xl shadow-xl p-8 mb-8 border border-gray-700">
+            <div className="flex items-center gap-3 mb-8">
+              <FiBarChart2 className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold text-white">Live Results</h2>
+              <span className="bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-sm ml-auto">
+                {poll.totalVotes} total votes
               </span>
             </div>
-            <Bar
-              data={data}
-              options={{
-                responsive: true,
-                plugins: { 
-                  legend: { display: false },
-                  tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#1e293b',
-                    bodyColor: '#475569',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    padding: 12,
-                  }
-                },
-                animation: { duration: 800 },
-                scales: { 
-                  y: { 
-                    beginAtZero: true,
-                    grid: { color: 'rgba(226, 232, 240, 0.5)' },
-                    ticks: { stepSize: 1 }
+            
+            <div className="bg-gray-700/30 p-5 rounded-2xl">
+              <Bar
+                data={data}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                      backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                      titleColor: '#f1f5f9',
+                      bodyColor: '#cbd5e1',
+                      borderColor: '#334155',
+                      borderWidth: 1,
+                      padding: 12,
+                      boxPadding: 6,
+                      cornerRadius: 8,
+                    }
                   },
-                  x: { grid: { display: false } }
-                },
-              }}
-            />
+                  animation: { duration: 800 },
+                  scales: { 
+                    y: { 
+                      beginAtZero: true,
+                      grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                      ticks: { 
+                        stepSize: 1,
+                        color: '#94a3b8'
+                      }
+                    },
+                    x: {
+                      grid: { display: false },
+                      ticks: {
+                        color: '#94a3b8'
+                      }
+                    }
+                  },
+                }}
+                height={350}
+              />
+            </div>
           </div>
         )}
 
         {/* Admin Controls */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+        <div className="bg-gray-800 rounded-3xl shadow-xl p-8 border border-gray-700">
           <button
             onClick={() => setShowAdminControls(!showAdminControls)}
-            className="flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium mb-4"
+            className="flex items-center gap-3 text-gray-300 hover:text-white font-medium mb-4 w-full text-left"
           >
-            <FiSettings className="w-5 h-5" />
+            <FiSettings className="w-5 h-5 text-cyan-400" />
             Admin Controls
             {showAdminControls ? (
-              <FiChevronUp className="w-4 h-4 ml-auto" />
+              <FiChevronUp className="w-5 h-5 ml-auto" />
             ) : (
-              <FiChevronDown className="w-4 h-4 ml-auto" />
+              <FiChevronDown className="w-5 h-5 ml-auto" />
             )}
           </button>
 
           {showAdminControls && (
-            <div className="border-t pt-4 space-y-4">
+            <div className="border-t border-gray-700 pt-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Admin Key</label>
+                <label className="block text-sm font-medium text-gray-400 mb-3">
+                  Admin Key
+                </label>
                 <input
                   type="password"
                   placeholder="Enter your admin key"
                   value={adminKey}
                   onChange={(e) => setAdminKey(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-gray-200 placeholder-gray-500"
                 />
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <button
                   onClick={() => handleAdminAction('close')}
-                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors"
+                  className="flex items-center justify-center gap-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300"
                 >
-                  <FiLock className="w-4 h-4" />
+                  <FiLock className="w-5 h-5" />
                   Close Poll
                 </button>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <input
                     type="number"
                     placeholder="Minutes"
                     value={extendMinutes}
                     onChange={(e) => setExtendMinutes(e.target.value)}
                     min="1"
-                    className="flex-1 px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-4 py-3.5 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-gray-200 placeholder-gray-500"
                   />
                   <button
                     onClick={() => handleAdminAction('extend')}
-                    className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-3.5 rounded-xl font-medium transition-all duration-300 whitespace-nowrap"
                   >
-                    <FiCalendar className="w-4 h-4" />
+                    <FiCalendar className="w-5 h-5" />
                     Extend
                   </button>
                 </div>
@@ -413,9 +506,9 @@ const PollPage = () => {
           )}
         </div>
 
-        {/* Error */}
+        {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-5 py-4 rounded-xl mt-6">
             {error}
           </div>
         )}

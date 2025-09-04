@@ -9,7 +9,6 @@ import {
   FiSave,
   FiAlertTriangle,
 } from "react-icons/fi";
-import { motion } from "framer-motion";
 
 const CreatePoll = () => {
   const navigate = useNavigate();
@@ -37,14 +36,12 @@ const CreatePoll = () => {
       alert("Please enter a poll question.");
       return;
     }
-
     if (options.some((opt) => !opt.trim())) {
       alert("Please fill in all options.");
       return;
     }
 
     const finalExpiresInMinutes = parseInt(customTime);
-
     if (!finalExpiresInMinutes || finalExpiresInMinutes <= 0) {
       alert("Please enter a valid time in minutes (greater than 0).");
       return;
@@ -54,13 +51,8 @@ const CreatePoll = () => {
       setLoading(true);
       const res = await axios.post(
         "https://votesphere-2zhx.onrender.com/api/polls",
-        {
-          question,
-          options,
-          expiresInMinutes: finalExpiresInMinutes,
-        }
+        { question, options, expiresInMinutes: finalExpiresInMinutes }
       );
-
       setAdminKey(res.data.adminKey);
       setPollId(res.data.pollId);
       setShowAdminKey(true);
@@ -77,180 +69,142 @@ const CreatePoll = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left Hero Section */}
-      <div className="flex-1 bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 text-white flex flex-col items-center justify-center p-10 relative overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-lg text-center lg:text-left"
-        >
-          <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight mb-4">
-            Create Your <span className="text-yellow-300">Poll</span>
-          </h1>
-          <p className="text-lg text-blue-100 mb-8">
-            Define your question, add options, and set a time limit.
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-6 text-gray-100">
+      <div className="w-full max-w-3xl bg-gray-800 rounded-3xl shadow-2xl p-8 border border-gray-700">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-700 rounded-full shadow-lg mb-6">
+            <FiPlus className="w-10 h-10 text-cyan-400" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">
+            Create a New Poll
+          </h2>
+          <p className="text-gray-400">
+            Set your question, add options, and define the duration.
           </p>
-        </motion.div>
-        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-      </div>
+        </div>
 
-      {/* Right Form Section */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-slate-50">
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl border border-slate-100"
-        >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-blue-500 to-indigo-600 text-white rounded-2xl shadow-md mb-4">
-              <FiPlus className="w-6 h-6" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Create New Poll
-            </h2>
-            <p className="text-slate-500 text-sm">
-              Set up your voting question and options
-            </p>
+        {/* Poll Question */}
+        <div className="mb-8">
+          <label className="block text-sm font-semibold mb-2 text-gray-300">
+            Poll Question *
+          </label>
+          <input
+            type="text"
+            placeholder="What would you like to ask?"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-gray-700 border border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-100"
+          />
+        </div>
+
+        {/* Poll Options */}
+        <div className="mb-8">
+          <label className="block text-sm font-semibold mb-3 text-gray-300">
+            Options * (Minimum 2 required)
+          </label>
+          <div className="space-y-3">
+            {options.map((opt, index) => (
+              <div key={index} className="relative flex">
+                <input
+                  type="text"
+                  placeholder={`Option ${index + 1}`}
+                  value={opt}
+                  onChange={(e) =>
+                    handleOptionChange(index, e.target.value)
+                  }
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-700 border border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-100"
+                />
+                {options.length > 2 && (
+                  <button
+                    onClick={() => removeOption(index)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-
-          {/* Poll Question */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Poll Question *
-            </label>
-            <input
-              type="text"
-              placeholder="What would you like to ask?"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            />
-          </div>
-
-          {/* Poll Duration */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-3">
-              <FiClock className="inline w-4 h-4 mr-1" />
-              Poll Duration (minutes) *
-            </label>
-            <input
-              type="number"
-              placeholder="Enter duration in minutes (e.g., 60)"
-              value={customTime}
-              onChange={(e) => setCustomTime(e.target.value)}
-              min="1"
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <p className="text-sm text-slate-500 mt-1">
-              Minimum 1 minute required
-            </p>
-          </div>
-
-          {/* Poll Options */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-3">
-              Options * (Minimum 2 required)
-            </label>
-
-            <div className="space-y-3">
-              {options.map((opt, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      placeholder={`Option ${index + 1}`}
-                      value={opt}
-                      onChange={(e) =>
-                        handleOptionChange(index, e.target.value)
-                      }
-                      className="w-full pl-4 pr-10 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    />
-                    {options.length > 2 && (
-                      <button
-                        onClick={() => removeOption(index)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-red-500 hover:text-red-700 transition-colors"
-                        title="Remove option"
-                      >
-                        <FiX className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={addOption}
-              className="mt-3 w-full flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 font-medium py-2 transition-colors"
-            >
-              <FiPlus className="w-4 h-4" />
-              Add Another Option
-            </button>
-          </div>
-
-          {/* Create Poll Button */}
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleSubmit}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3.5 px-4 rounded-xl font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mb-4"
-            disabled={
-              loading ||
-              !question.trim() ||
-              options.filter((opt) => opt.trim()).length < 2 ||
-              !customTime
-            }
+          <button
+            onClick={addOption}
+            className="mt-4 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-medium"
           >
-            <FiSave className="w-5 h-5" />
-            {loading ? "Creating Poll..." : "Create Poll"}
-          </motion.button>
+            <FiPlus className="w-4 h-4" />
+            Add Another Option
+          </button>
+        </div>
 
-          {/* Admin Key Display */}
-          {showAdminKey && adminKey && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-5 bg-amber-50 rounded-xl border border-amber-200 mb-4"
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <FiAlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-amber-800 mb-2">
-                    Important: Save Your Admin Key
-                  </h3>
-                  <p className="text-amber-700 text-sm mb-3">
-                    This key is required to manage your poll. Save it
-                    somewhere safe!
-                  </p>
-                  <div className="bg-white p-3 rounded border border-amber-300 mb-3">
-                    <code className="text-amber-800 font-mono text-sm break-all">
-                      {adminKey}
-                    </code>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleContinueToPoll}
-                      className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-                    >
-                      Continue to Poll
-                    </button>
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(adminKey)
-                      }
-                      className="border border-amber-300 text-amber-700 hover:bg-amber-100 px-4 py-2 rounded text-sm font-medium transition-colors"
-                    >
-                      Copy Key
-                    </button>
-                  </div>
+        {/* Poll Duration */}
+        <div className="mb-8">
+          <label className="block text-sm font-semibold mb-3 text-gray-300">
+            <FiClock className="inline w-4 h-4 mr-1 text-cyan-400" />
+            Poll Duration (minutes) *
+          </label>
+          <input
+            type="number"
+            placeholder="Enter duration in minutes (e.g., 60)"
+            value={customTime}
+            onChange={(e) => setCustomTime(e.target.value)}
+            min="1"
+            className="w-full px-4 py-3 rounded-xl bg-gray-700 border border-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-100"
+          />
+          <p className="text-sm text-gray-400 mt-2">
+            Minimum 1 minute required
+          </p>
+        </div>
+
+        {/* Submit */}
+        <button
+          onClick={handleSubmit}
+          disabled={
+            loading ||
+            !question.trim() ||
+            options.filter((opt) => opt.trim()).length < 2 ||
+            !customTime
+          }
+          className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FiSave className="w-5 h-5" />
+          {loading ? "Creating Poll..." : "Create Poll"}
+        </button>
+
+        {/* Admin Key Display */}
+        {showAdminKey && adminKey && (
+          <div className="mt-8 p-6 bg-amber-100 rounded-xl border-l-4 border-amber-500 text-amber-900">
+            <div className="flex items-start gap-4">
+              <FiAlertTriangle className="w-6 h-6 mt-1 text-amber-600" />
+              <div>
+                <h3 className="font-bold mb-2">
+                  Important: Save Your Admin Key
+                </h3>
+                <p className="mb-3">
+                  This key is required to manage your poll. Save it
+                  somewhere safe!
+                </p>
+                <div className="bg-white px-4 py-2 rounded font-mono text-sm break-all mb-3 border border-amber-300">
+                  {adminKey}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleContinueToPoll}
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded font-medium"
+                  >
+                    Continue to Poll
+                  </button>
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(adminKey)
+                    }
+                    className="border border-amber-400 text-amber-700 hover:bg-amber-200 px-4 py-2 rounded font-medium"
+                  >
+                    Copy Key
+                  </button>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </motion.div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
