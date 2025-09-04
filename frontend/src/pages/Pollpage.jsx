@@ -16,7 +16,7 @@ import {
 import { 
   FiClock, FiCopy, FiCheck, FiLock, FiUnlock, FiCalendar, 
   FiUsers, FiHome, FiSettings, FiChevronDown, FiChevronUp,
-  FiArrowLeft, FiShare2, FiBarChart2
+  FiArrowLeft, FiShare2, FiBarChart2, FiEye
 } from 'react-icons/fi';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -29,6 +29,7 @@ const PollPage = () => {
   const [poll, setPoll] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [canSeeResults, setCanSeeResults] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState('');
@@ -38,11 +39,18 @@ const PollPage = () => {
   const [extendMinutes, setExtendMinutes] = useState('10');
   const [showShareOptions, setShowShareOptions] = useState(false);
 
-  // Check if user has already voted
+  // Check if user has already voted and can see results
   useEffect(() => {
     const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '{}');
     if (votedPolls[id]) {
       setHasVoted(true);
+      setCanSeeResults(true);
+    }
+    
+    // Also check if user has previously been granted results view
+    const resultsAccess = JSON.parse(localStorage.getItem('resultsAccess') || '{}');
+    if (resultsAccess[id]) {
+      setCanSeeResults(true);
     }
   }, [id]);
 
@@ -123,7 +131,13 @@ const PollPage = () => {
       votedPolls[id] = true;
       localStorage.setItem('votedPolls', JSON.stringify(votedPolls));
       
+      // Also grant permission to see results
+      const resultsAccess = JSON.parse(localStorage.getItem('resultsAccess') || '{}');
+      resultsAccess[id] = true;
+      localStorage.setItem('resultsAccess', JSON.stringify(resultsAccess));
+      
       setHasVoted(true);
+      setCanSeeResults(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit vote. Please try again.');
       console.error(err);
@@ -184,6 +198,14 @@ const PollPage = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Admin action failed');
     }
+  };
+
+  // Function to manually show results (for users who voted but can't see results due to previous bug)
+  const showResults = () => {
+    const resultsAccess = JSON.parse(localStorage.getItem('resultsAccess') || '{}');
+    resultsAccess[id] = true;
+    localStorage.setItem('resultsAccess', JSON.stringify(resultsAccess));
+    setCanSeeResults(true);
   };
 
   if (loading) {
@@ -388,11 +410,22 @@ const PollPage = () => {
                 Total votes: {poll.totalVotes}
               </p>
             )}
+            
+            {/* Show results button for users who voted but can't see results */}
+            {hasVoted && !canSeeResults && (
+              <button
+                onClick={showResults}
+                className="mt-4 flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 px-5 rounded-xl font-medium transition-colors mx-auto"
+              >
+                <FiEye className="w-4 h-4" />
+                Show Results
+              </button>
+            )}
           </div>
         )}
 
-        {/* Results Section */}
-        {poll.totalVotes > 0 && (
+        {/* Results Section - Now visible if canSeeResults is true */}
+        {(canSeeResults && poll.totalVotes > 0) && (
           <div className="bg-gray-800 rounded-3xl shadow-xl p-8 mb-8 border border-gray-700">
             <div className="flex items-center gap-3 mb-8">
               <FiBarChart2 className="w-6 h-6 text-cyan-400" />
